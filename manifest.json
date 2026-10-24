@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.tw527e.howdy-manual",
+  "name": "Howdy Manual",
+  "version": "0.1.0",
+  "author": "TW527E",
+  "license": "MIT",
+  "description": "Read the permission request, then choose face recognition or a password.",
+  "homepage": "https://github.com/TW527E/omarchy-howdy-manual",
+  "kinds": ["service", "panel"],
+  "keepLoaded": true,
+  "entryPoints": {"service": "Service.qml", "panel": "Preview.qml"},
+  "omarchy": {"clonedFrom": "omarchy.polkit"}
+}

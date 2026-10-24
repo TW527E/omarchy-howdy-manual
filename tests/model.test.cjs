@@ -1,0 +1,12 @@
+const assert = require('node:assert/strict');
+const model = require('../Model.js');
+assert(model.isFaceChoice('Password (or press Enter for face recognition): '));
+assert(!model.isFaceChoice('Password:'));
+assert(!model.canSubmit(true, false, true, ''));
+assert(model.canSubmit(true, false, true, 'password'));
+assert(!model.canSubmit(true, true, true, 'password'));
+assert(!model.canSubmit(false, false, false, 'password'));
+assert(model.canSubmit(true, false, false, '123456'));
+assert.equal(model.text('Cancel', '取消', 'zh_TW'), '取消');
+assert.equal(model.text('Cancel', '取消', 'en_US'), 'Cancel');
+console.log('PASS: prompt recognition, explicit choice, busy state, locale');
