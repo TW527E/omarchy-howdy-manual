@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import stat
 import tempfile
 
@@ -97,10 +98,16 @@ def install(services, binary):
     root_owned(MODULE.parent, directory=True)
     STATE.mkdir(mode=0o700)
     state = {'original': originals, 'applied': applied, 'module_sha256': digest(module), 'previous_module': previous is not None}
-    if previous is not None:
-        atomic_write(STATE / 'module.before', previous, 0o600)
-    # Save recovery data before touching any active PAM file.
-    atomic_write(STATE / 'state.json', (json.dumps(state, indent=2) + '\n').encode(), 0o600)
+    try:
+        if previous is not None:
+            atomic_write(STATE / 'module.before', previous, 0o600)
+        # Save recovery data before touching any active PAM file.
+        atomic_write(STATE / 'state.json', (json.dumps(state, indent=2) + '\n').encode(), 0o600)
+    except BaseException:
+        # Nothing on the system has changed yet. Leave no half-written state
+        # behind, or both install and remove would refuse to run afterwards.
+        shutil.rmtree(STATE, ignore_errors=True)
+        raise
     try:
         atomic_write(MODULE, module, 0o755)
         for name, text in applied.items():
@@ -149,7 +156,17 @@ def remove():
             atomic_write(PAM_DIR / name, text.encode(), 0o644)
         raise
     saved = STATE.with_name('omarchy-howdy-manual-restored-' + str(os.getpid()))
-    STATE.rename(saved)
+    try:
+        STATE.rename(saved)
+    except OSError as error:
+        # Authentication is already restored, so the record is no longer needed
+        # for recovery. It must not stay in place: it would block the next
+        # install, and a second remove would fail on the missing module.
+        shutil.rmtree(STATE, ignore_errors=True)
+        if STATE.exists():
+            raise ValueError(f'Original authentication restored, but {STATE} could not be archived or removed ({error}); delete it by hand before reinstalling')
+        print('Original authentication restored. The recovery record could not be archived and was removed.')
+        return
     print('Original authentication restored. Recovery record retained at ' + str(saved))
 
 
