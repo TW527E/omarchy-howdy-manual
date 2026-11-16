@@ -25,8 +25,9 @@ Panel {
       prompt: "Password (or press Enter for face recognition): "
       responseRequired: true
       onFaceRequested: supplementary = tr("Preview: the camera was not started.", "預覽：未啟動相機。")
-      onPasswordSubmitted: supplementary = tr("Preview: this input was discarded.", "預覽：輸入內容已丟棄。")
-      onCancelRequested: root.close()
+      onPasswordSubmitted: { preview.clear(); supplementary = tr("Preview: this input was discarded.", "預覽：輸入內容已丟棄。") }
+      // The panel stays loaded after closing; typed text must not wait there for the next preview.
+      onCancelRequested: { preview.clear(); root.close() }
     }
   }
 }
